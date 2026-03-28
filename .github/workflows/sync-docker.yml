@@ -1,14 +1,15 @@
 name: Sync Docker Image to ACR
 
+# 支持手动触发和定时触发
 on:
   workflow_dispatch:
     inputs:
-      image:
+      image:       # 镜像全名，例如 markoshust/magento-php:8.3-fpm-4
         description: 'Docker image to pull from Docker Hub'
         required: true
-        default: 'markoshust/magento-opensearch:2.12-0'
+        default: 'markoshust/magento-php:8.3-fpm-4'
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 3 * * *' # 可选，每天凌晨自动同步
 
 jobs:
   sync:
@@ -22,54 +23,28 @@ jobs:
         run: |
           echo "Pulling $IMAGE..."
           docker pull $IMAGE
-        shell: bash
-        env:
-          IMAGE: ${{ github.event.inputs.image }}
 
       - name: Login to Aliyun ACR
         run: |
-          echo "Logging in to Aliyun ACR..."
-          docker login $ALI_REGISTRY \
-            -u $ALI_USERNAME \
-            -p $ALI_PASSWORD
-        shell: bash
-        env:
-          ALI_REGISTRY: ${{ secrets.ALI_REGISTRY }}
-          ALI_USERNAME: ${{ secrets.ALI_USERNAME }}
-          ALI_PASSWORD: ${{ secrets.ALI_PASSWORD }}
+          docker login ${{ secrets.ALI_REGISTRY }} \
+            -u ${{ secrets.ALI_USERNAME }} \
+            -p ${{ secrets.ALI_PASSWORD }}
 
       - name: Tag image for ACR
         run: |
-          # 使用原始镜像层级，保持 Docker Hub 名字
-          IMAGE_NAME=$(echo $IMAGE | awk -F '/' '{print $NF}' | awk -F ':' '{print $1}')
+          IMAGE_NAME=$(echo $IMAGE | awk -F ':' '{print $1}' | sed 's/\//-/g')
           TAG=$(echo $IMAGE | awk -F ':' '{print $2}')
-          ACR_IMAGE="$ALI_REGISTRY/$ALI_NAMESPACE/$IMAGE_NAME:$TAG"
-
-          echo "Tagging $IMAGE -> $ACR_IMAGE"
-          docker tag $IMAGE $ACR_IMAGE
-          echo "TAGGED_IMAGE=$ACR_IMAGE" >> $GITHUB_ENV
-        shell: bash
-        env:
-          IMAGE: ${{ github.event.inputs.image }}
-          ALI_REGISTRY: ${{ secrets.ALI_REGISTRY }}
-          ALI_NAMESPACE: ${{ secrets.ALI_NAMESPACE }}
+          docker tag $IMAGE crpi-bjz4kedi811densl.cn-hangzhou.personal.cr.aliyuncs.com/cool8056/$IMAGE_NAME:$TAG
+          echo "TAGGED_IMAGE=crpi-bjz4kedi811densl.cn-hangzhou.personal.cr.aliyuncs.com/cool8056/$IMAGE_NAME:$TAG" >> $GITHUB_ENV
 
       - name: Push image to ACR
         run: |
-          echo "Pushing $TAGGED_IMAGE to ACR..."
           docker push $TAGGED_IMAGE
-        shell: bash
-        env:
-          TAGGED_IMAGE: ${{ env.TAGGED_IMAGE }}
 
-      - name: Generate client commands
+      - name: Generate docker pull command for customer
         run: |
-          CLIENT_PULL="$TAGGED_IMAGE"
-          CLIENT_TAG=$(echo $IMAGE | awk -F '/' '{print $NF}')  # 取 Docker Hub 镜像名
+          CLIENT_PULL="crpi-bjz4kedi811densl.cn-hangzhou.personal.cr.aliyuncs.com/cool8056/$IMAGE_NAME:$TAG"
+          CLIENT_TAG=$(echo $IMAGE | awk -F '/' '{print $2}')  # 去掉命名空间
           echo "客户 pull 命令: docker pull $CLIENT_PULL"
           echo "客户 tag 命令:  docker tag $CLIENT_PULL $CLIENT_TAG"
           echo "客户删除镜像命令: docker rmi $CLIENT_PULL"
-        shell: bash
-        env:
-          IMAGE: ${{ github.event.inputs.image }}
-          TAGGED_IMAGE: ${{ env.TAGGED_IMAGE }}
