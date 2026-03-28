@@ -1,33 +1,42 @@
-name: Sync Docker via aliyun
+name: Sync Docker
 
+# 支持手动触发和定时触发
 on:
   workflow_dispatch:
+    inputs:
+      image:       # 镜像全名，例如 markoshust/magento-php:8.3-fpm-4
+        description: 'Docker image to pull from Docker Hub'
+        required: true
+        default: 'markoshust/magento-php:8.3-fpm-4'
+  schedule:
+    - cron: '0 3 * * *' # 可选，每天凌晨自动同步
 
 jobs:
   sync:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set Docker image
+        run: echo "IMAGE=${{ github.event.inputs.image }}" >> $GITHUB_ENV
+
       - name: Pull image from Docker Hub
         run: |
-          docker pull markoshust/magento-php:8.3-fpm-4
-
-      - name: Debug login
-        run: |
-          echo "REGISTRY=${{ secrets.ALI_REGISTRY }}"
-          echo "USERNAME=${{ secrets.ALI_USERNAME }}"
+          echo "Pulling $IMAGE..."
+          docker pull $IMAGE
 
       - name: Login to Aliyun ACR
         run: |
-          echo "${{ secrets.ALI_PASSWORD }}" | docker login ${{ secrets.ALI_REGISTRY }} \
-          -u "${{ secrets.ALI_USERNAME }}" \
-          --password-stdin
+          docker login ${{ secrets.ALI_REGISTRY }} \
+            -u ${{ secrets.ALI_USERNAME }} \
+            -p ${{ secrets.ALI_PASSWORD }}
 
-      - name: Tag image
+      - name: Tag image for ACR
         run: |
-          docker tag markoshust/magento-php:8.3-fpm-4 \
-          ${{ secrets.ALI_REGISTRY }}/${{ secrets.ALI_NAMESPACE }}/magento-php:8.3-fpm-4
+          IMAGE_NAME=$(echo $IMAGE | sed 's/:/-/g' | sed 's/\//-/g')  # 转成合法 repo 名
+          TAG=$(echo $IMAGE | awk -F ':' '{print $2}')
+          docker tag $IMAGE ${{ secrets.ALI_REGISTRY }}/${{ secrets.ALI_NAMESPACE }}/$IMAGE_NAME:$TAG
+          echo "TAGGED_IMAGE=${{ secrets.ALI_REGISTRY }}/${{ secrets.ALI_NAMESPACE }}/$IMAGE_NAME:$TAG" >> $GITHUB_ENV
 
-      - name: Push to ACR
+      - name: Push image to ACR
         run: |
-          docker push ${{ secrets.ALI_REGISTRY }}/${{ secrets.ALI_NAMESPACE }}/magento-php:8.3-fpm-4
+          docker push $TAGGED_IMAGE
