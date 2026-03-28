@@ -26,7 +26,7 @@ jobs:
 
       - name: Login to Aliyun ACR
         run: |
-          docker login crpi-bjz4kedi811densl.cn-hangzhou.personal.cr.aliyuncs.com \
+          docker login ${{ secrets.ALI_REGISTRY }} \
             -u ${{ secrets.ALI_USERNAME }} \
             -p ${{ secrets.ALI_PASSWORD }}
 
@@ -34,8 +34,7 @@ jobs:
         run: |
           REPO=$(echo $IMAGE | awk -F ':' '{print $1}')
           TAG=$(echo $IMAGE | awk -F ':' '{print $2}')
-          ACR_IMAGE="crpi-bjz4kedi811densl.cn-hangzhou.personal.cr.aliyuncs.com/cool8056/$REPO:$TAG"
-          echo "Tagging $IMAGE -> $ACR_IMAGE"
+          ACR_IMAGE=${{ secrets.ALI_REGISTRY }}/${{ secrets.ALI_NAMESPACE }}/$IMAGE_NAME/$REPO:$TAG
           docker tag $IMAGE $ACR_IMAGE
           echo "TAGGED_IMAGE=$ACR_IMAGE" >> $GITHUB_ENV
 
