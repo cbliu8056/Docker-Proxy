@@ -34,7 +34,7 @@ jobs:
         run: |
           REPO=$(echo $IMAGE | awk -F ':' '{print $1}')
           TAG=$(echo $IMAGE | awk -F ':' '{print $2}')
-          ACR_IMAGE=${{ secrets.ALI_REGISTRY }}/${{ secrets.ALI_NAMESPACE }}/$IMAGE_NAME/$REPO:$TAG
+          ACR_IMAGE=${{ secrets.ALI_REGISTRY }}/${{ secrets.ALI_NAMESPACE }}$IMAGE_NAME/$REPO:$TAG
           docker tag $IMAGE $ACR_IMAGE
           echo "TAGGED_IMAGE=$ACR_IMAGE" >> $GITHUB_ENV
 
