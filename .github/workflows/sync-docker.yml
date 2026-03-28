@@ -32,6 +32,8 @@ jobs:
 
       - name: Tag image for ACR
         run: |
+          ALI_REGISTRY=${{ secrets.ALI_REGISTRY }}
+          ALI_NAMESPACE=${{ secrets.ALI_NAMESPACE }}
           REPO=$(echo $IMAGE | awk -F ':' '{print $1}')
           REPO_FLAT=$(echo $REPO | sed 's#/#-#g')
           TAG=$(echo $IMAGE | awk -F ':' '{print $2}')
