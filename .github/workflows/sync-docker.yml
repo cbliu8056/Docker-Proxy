@@ -26,7 +26,7 @@ jobs:
 
       - name: Login to Aliyun ACR
         run: |
-          docker login ${{ secrets.ALI_REGISTRY }} \
+          docker login crpi-bjz4kedi811densl.cn-hangzhou.personal.cr.aliyuncs.com \
             -u ${{ secrets.ALI_USERNAME }} \
             -p ${{ secrets.ALI_PASSWORD }}
 
