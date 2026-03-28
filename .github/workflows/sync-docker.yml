@@ -43,5 +43,8 @@ jobs:
 
       - name: Generate docker pull command for customer
         run: |
-          echo "You can pull the image with the following command:"
-          echo "docker pull $TAGGED_IMAGE"
+          CLIENT_PULL="${{ secrets.ALI_REGISTRY }}/{{ secrets.ALI_NAMESPACE }}/$IMAGE_NAME:$TAG"
+          CLIENT_TAG=$(echo $IMAGE | awk -F '/' '{print $2}')  # 去掉命名空间
+          echo "客户 pull 命令: docker pull $CLIENT_PULL"
+          echo "客户 tag 命令:  docker tag $CLIENT_PULL $CLIENT_TAG"
+          echo "客户删除镜像命令: docker rmi $CLIENT_PULL"
