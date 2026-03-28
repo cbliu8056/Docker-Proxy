@@ -1,4 +1,4 @@
-name: Sync Docker Image to ACR
+name: Sync Docker via aliyun
 
 on:
   workflow_dispatch:
