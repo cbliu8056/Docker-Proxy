@@ -14,9 +14,9 @@ jobs:
 
       - name: Login to Aliyun ACR
         run: |
-          docker login ${{ secrets.ALI_REGISTRY }} \
-          -u ${{ secrets.ALI_USERNAME }} \
-          -p ${{ secrets.ALI_PASSWORD }}
+          echo "${{ secrets.ALI_PASSWORD }}" | docker login ${{ secrets.ALI_REGISTRY }} \
+          -u "${{ secrets.ALI_USERNAME }}" \
+          --password-stdin
 
       - name: Tag image
         run: |
