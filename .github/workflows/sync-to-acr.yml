@@ -12,6 +12,11 @@ jobs:
         run: |
           docker pull markoshust/magento-php:8.3-fpm-4
 
+      - name: Debug login
+        run: |
+          echo "REGISTRY=${{ secrets.ALI_REGISTRY }}"
+          echo "USERNAME=${{ secrets.ALI_USERNAME }}"
+
       - name: Login to Aliyun ACR
         run: |
           echo "${{ secrets.ALI_PASSWORD }}" | docker login ${{ secrets.ALI_REGISTRY }} \
