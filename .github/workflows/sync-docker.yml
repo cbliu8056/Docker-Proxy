@@ -40,3 +40,8 @@ jobs:
       - name: Push image to ACR
         run: |
           docker push $TAGGED_IMAGE
+
+      - name: Generate docker pull command for customer
+        run: |
+          echo "You can pull the image with the following command:"
+          echo "docker pull $TAGGED_IMAGE"
